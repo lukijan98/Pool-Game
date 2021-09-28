@@ -7,4 +7,4 @@ build_property.PublishSingleFile =
 build_property.IncludeAllContentForSelfExtract = 
 build_property._SupportedPlatformList = Android,iOS,Linux,macOS,Windows
 build_property.RootNamespace = pool_game_web
-build_property.ProjectDir = /home/luka/Pool-Game/pool-game-web/
+build_property.ProjectDir = /home/luka/Project/Pool-Game/pool-game-web/

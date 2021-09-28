@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/home/luka/Pool-Game/pool-game-web/pool-game-web.csproj": {}
+    "/home/luka/Project/Pool-Game/pool-game-web/pool-game-web.csproj": {}
   },
   "projects": {
-    "/home/luka/Pool-Game/pool-game-web/pool-game-web.csproj": {
+    "/home/luka/Project/Pool-Game/pool-game-web/pool-game-web.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/home/luka/Pool-Game/pool-game-web/pool-game-web.csproj",
+        "projectUniqueName": "/home/luka/Project/Pool-Game/pool-game-web/pool-game-web.csproj",
         "projectName": "pool-game-web",
-        "projectPath": "/home/luka/Pool-Game/pool-game-web/pool-game-web.csproj",
+        "projectPath": "/home/luka/Project/Pool-Game/pool-game-web/pool-game-web.csproj",
         "packagesPath": "/home/luka/.nuget/packages/",
-        "outputPath": "/home/luka/Pool-Game/pool-game-web/obj/",
+        "outputPath": "/home/luka/Project/Pool-Game/pool-game-web/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/home/luka/.nuget/NuGet/NuGet.Config"
@@ -38,9 +38,17 @@
         "net5.0": {
           "targetAlias": "net5.0",
           "dependencies": {
+            "Microsoft.AspNet.Identity.Core": {
+              "target": "Package",
+              "version": "[2.2.3, )"
+            },
             "Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore": {
               "target": "Package",
               "version": "[5.0.10, )"
+            },
+            "Microsoft.AspNetCore.Identity": {
+              "target": "Package",
+              "version": "[2.2.0, )"
             },
             "Microsoft.AspNetCore.Identity.EntityFrameworkCore": {
               "target": "Package",

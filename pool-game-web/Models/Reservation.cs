@@ -17,8 +17,26 @@ namespace pool_game_web.Models
         [Required(ErrorMessage = "{0} Is required.")]
         public string ReservationName { get; set; }
 
-        public int VisitorId {get;set;}
-        public Visitor Visitor {get;set;}
+
+        [DataType(DataType.Date)]
+        [Display(Name="Date")]
+        //[DisplayFormat(ApplyFormatInEditMode = true, DataFormatString = "{0:HH\:mm}")]
+        public DateTime Date { get; set; }
+
+
+        [DataType(DataType.Time)]
+        [Display(Name="Start time")]
+        //[DisplayFormat(ApplyFormatInEditMode = true,   DataFormatString = "{0:HH:mm:ss}")]
+        public TimeSpan TimeStart { get; set; }
+
+        [DataType(DataType.Time)]
+        [Display(Name="End time")]
+       // [DisplayFormat(ApplyFormatInEditMode = true,   DataFormatString = "{0:HH:mm:ss}")]
+        public TimeSpan TimeEnding { get; set; }
+
+
+        public string ApplicationUserId {get;set;}
+        public ApplicationUser ApplicationUser {get;set;}
 
         public int PoolTableId {get;set;}
         public PoolTable PoolTable {get;set;}

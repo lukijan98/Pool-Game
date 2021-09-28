@@ -7,15 +7,21 @@ using pool_game_web.Models;
 
 namespace pool_game_web.Data
 {
-    public class ApplicationDbContext : IdentityDbContext
+    public class ApplicationDbContext : IdentityDbContext<ApplicationUser,ApplicationRole,string>
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
         {
         }
-
-        public DbSet<Visitor> Visitors { get; set;}
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<ApplicationUser>()
+                .Property(e => e.Id)
+                .ValueGeneratedOnAdd();
+            base.OnModelCreating(modelBuilder);    
+        }
+        public DbSet<Reservation> Reservations { get; set;}
         public DbSet<PoolTable> PoolTables { get; set;}
-        public DbSet<Reservation> Reservationss { get; set;}
+        public DbSet<ApplicationUser> ApplicationUsers { get; set;}
     }
 }
