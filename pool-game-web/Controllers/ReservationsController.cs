@@ -55,7 +55,7 @@ namespace pool_game_web.Controllers
             var a = await _context.IdentityUsers.Where(t => t.Email == User.FindFirstValue(ClaimTypes.Email)).ToListAsync();
             ViewData["IdentityUserId"] = new SelectList(a,"Id","Email");
            // ViewData["IdentityUserId"] = new SelectList(_context.IdentityUsers, "Id", "Id");
-            ViewData["PoolTableId"] = new SelectList(_context.PoolTables, "PoolTableId", "PoolTableId");
+           // ViewData["PoolTableId"] = new SelectList(_context.PoolTables, "PoolTableId", "PoolTableId");
             return View();
         }
 
@@ -68,19 +68,41 @@ namespace pool_game_web.Controllers
         {
             if (ModelState.IsValid)
             {
-                var res = _context.Reservations
-                    .Where(r => (r.Date == reservation.Date) && (r.PoolTableId==reservation.PoolTableId) && (((TimeSpan.Compare(reservation.TimeStart,r.TimeStart)<=0)&&(TimeSpan.Compare(reservation.TimeEnding,r.TimeEnding)>=0))||
+                IList<Reservation> res = _context.Reservations
+                    .Where(r => (r.Date == reservation.Date) && (((TimeSpan.Compare(reservation.TimeStart,r.TimeStart)<=0)&&(TimeSpan.Compare(reservation.TimeEnding,r.TimeEnding)>=0))||
                                 ((TimeSpan.Compare(reservation.TimeStart,r.TimeStart)>=0)&&(TimeSpan.Compare(reservation.TimeEnding,r.TimeEnding)<=0))||
                                 ((TimeSpan.Compare(reservation.TimeStart,r.TimeEnding)<0)&&(TimeSpan.Compare(reservation.TimeEnding,r.TimeEnding)>0))||
-                                ((TimeSpan.Compare(reservation.TimeStart,r.TimeStart)<0)&&(TimeSpan.Compare(reservation.TimeEnding,r.TimeStart)>0))) );
+                                ((TimeSpan.Compare(reservation.TimeStart,r.TimeStart)<0)&&(TimeSpan.Compare(reservation.TimeEnding,r.TimeStart)>0))) )
+                                .ToList();
                    // .FirstOrDefault();
-                if(res==null) {
+                IList<PoolTable> tables = _context.PoolTables.ToList();
+                Console.WriteLine(tables.Count);
+                for(int i=0;i<tables.Count;i++)
+                {
+                    Console.WriteLine(tables[i]);
+                }       
+                if(res.Count == 0||res==null){
+                    reservation.PoolTableId = tables[0].PoolTableId;
                     _context.Add(reservation);
                     await _context.SaveChangesAsync();
                     return RedirectToAction(nameof(Index));
-                }   
-
+                }       
+                else{
+                    foreach (Reservation reserv in res)
+                    {
+                        Console.WriteLine(reserv.PoolTableId);
+                        PoolTable itemToRemove = tables.SingleOrDefault(r => r.PoolTableId == reserv.PoolTableId);
+                        tables.Remove(itemToRemove);
+                    }
+                    if(tables.Count != 0){
+                        reservation.PoolTableId = tables[0].PoolTableId;
+                        _context.Add(reservation);
+                        await _context.SaveChangesAsync();
+                        return RedirectToAction(nameof(Index));
+                    }      
+                }    
             }
+            ModelState.AddModelError("", "No available table at that time and date");
             var a = await _context.IdentityUsers.Where(t => t.Email == User.FindFirstValue(ClaimTypes.Email)).ToListAsync();
             ViewData["IdentityUserId"] = new SelectList(a,"Id","Email");
            // ViewData["IdentityUserId"] = new SelectList(_context.IdentityUsers, "Id", "Id");
