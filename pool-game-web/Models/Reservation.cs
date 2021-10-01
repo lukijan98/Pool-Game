@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.AspNetCore.Identity;
+using FoolProof.Core;
 
 namespace pool_game_web.Models
 {
@@ -31,12 +33,13 @@ namespace pool_game_web.Models
 
         [DataType(DataType.Time)]
         [Display(Name="End time")]
+        [GreaterThan("TimeStart")]
        // [DisplayFormat(ApplyFormatInEditMode = true,   DataFormatString = "{0:HH:mm:ss}")]
         public TimeSpan TimeEnding { get; set; }
 
 
-        public string ApplicationUserId {get;set;}
-        public ApplicationUser ApplicationUser {get;set;}
+        public string IdentityUserId {get;set;}
+        public IdentityUser IdentityUser {get;set;}
 
         public int PoolTableId {get;set;}
         public PoolTable PoolTable {get;set;}

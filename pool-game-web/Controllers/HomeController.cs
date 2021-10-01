@@ -17,7 +17,7 @@ namespace pool_game_web.Controllers
         {
             _logger = logger;
         }
-
+        
         public IActionResult Index()
         {
             return View();

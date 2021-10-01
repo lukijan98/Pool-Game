@@ -25,7 +25,7 @@
                 @Html.DisplayNameFor(model => model.TimeEnding)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.ApplicationUser)
+                @Html.DisplayNameFor(model => model.IdentityUser)
             </th>
             <th>
                 @Html.DisplayNameFor(model => model.PoolTable)
@@ -49,7 +49,7 @@
                 @Html.DisplayFor(modelItem => item.TimeEnding)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.ApplicationUser.Id)
+                @Html.DisplayFor(modelItem => item.IdentityUser.Email)
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.PoolTable.PoolTableId)

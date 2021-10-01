@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Security.Principal;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -16,21 +15,17 @@ namespace pool_game_web.Controllers
     public class ReservationsController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly UserManager<IdentityUser> _userManager;
 
-        private readonly UserManager<ApplicationUser> _userManager;
-    
-
-        public ReservationsController(ApplicationDbContext context,UserManager<ApplicationUser> userManager)
+        public ReservationsController(ApplicationDbContext context,UserManager<IdentityUser> userManager)
         {
             _context = context;
-            _userManager = userManager;
         }
 
         // GET: Reservations
         public async Task<IActionResult> Index()
         {
-           // var userEmail =  User.FindFirstValue(ClaimTypes.Email);
-            var applicationDbContext = _context.Reservations.Include(r => r.ApplicationUser).Include(r => r.PoolTable);
+            var applicationDbContext = _context.Reservations.Include(r => r.IdentityUser).Include(r => r.PoolTable);
             return View(await applicationDbContext.ToListAsync());
         }
 
@@ -43,7 +38,7 @@ namespace pool_game_web.Controllers
             }
 
             var reservation = await _context.Reservations
-                .Include(r => r.ApplicationUser)
+                .Include(r => r.IdentityUser)
                 .Include(r => r.PoolTable)
                 .FirstOrDefaultAsync(m => m.ReservationId == id);
             if (reservation == null)
@@ -57,8 +52,9 @@ namespace pool_game_web.Controllers
         // GET: Reservations/Create
         public async Task<IActionResult> Create()
         {
-            var a = await _context.ApplicationUsers.Where(t => t.Email == User.FindFirstValue(ClaimTypes.Email)).ToListAsync();
-            ViewData["ApplicationUserId"] = new SelectList(a,"ID");//User.FindFirstValue(ClaimTypes.Email);//new SelectList(_context.ApplicationUsers, "Id", "Id");
+            var a = await _context.IdentityUsers.Where(t => t.Email == User.FindFirstValue(ClaimTypes.Email)).ToListAsync();
+            ViewData["IdentityUserId"] = new SelectList(a,"Id","Email");
+           // ViewData["IdentityUserId"] = new SelectList(_context.IdentityUsers, "Id", "Id");
             ViewData["PoolTableId"] = new SelectList(_context.PoolTables, "PoolTableId", "PoolTableId");
             return View();
         }
@@ -68,16 +64,27 @@ namespace pool_game_web.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("ReservationId,ReservationName,Date,TimeStart,TimeEnding,ApplicationUserId,PoolTableId")] Reservation reservation)
+        public async Task<IActionResult> Create([Bind("ReservationId,ReservationName,Date,TimeStart,TimeEnding,IdentityUserId,PoolTableId")] Reservation reservation)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(reservation);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                var res = _context.Reservations
+                    .Where(r => (r.Date == reservation.Date) && (r.PoolTableId==reservation.PoolTableId) && (((TimeSpan.Compare(reservation.TimeStart,r.TimeStart)<=0)&&(TimeSpan.Compare(reservation.TimeEnding,r.TimeEnding)>=0))||
+                                ((TimeSpan.Compare(reservation.TimeStart,r.TimeStart)>=0)&&(TimeSpan.Compare(reservation.TimeEnding,r.TimeEnding)<=0))||
+                                ((TimeSpan.Compare(reservation.TimeStart,r.TimeEnding)<0)&&(TimeSpan.Compare(reservation.TimeEnding,r.TimeEnding)>0))||
+                                ((TimeSpan.Compare(reservation.TimeStart,r.TimeStart)<0)&&(TimeSpan.Compare(reservation.TimeEnding,r.TimeStart)>0))) );
+                   // .FirstOrDefault();
+                if(res==null) {
+                    _context.Add(reservation);
+                    await _context.SaveChangesAsync();
+                    return RedirectToAction(nameof(Index));
+                }   
+
             }
-            ViewData["ApplicationUserId"] = new SelectList(_context.ApplicationUsers, "Id", "Id", reservation.ApplicationUserId);
-            ViewData["PoolTableId"] = new SelectList(_context.PoolTables, "PoolTableId", "PoolTableId", reservation.PoolTableId);
+            var a = await _context.IdentityUsers.Where(t => t.Email == User.FindFirstValue(ClaimTypes.Email)).ToListAsync();
+            ViewData["IdentityUserId"] = new SelectList(a,"Id","Email");
+           // ViewData["IdentityUserId"] = new SelectList(_context.IdentityUsers, "Id", "Id");
+            ViewData["PoolTableId"] = new SelectList(_context.PoolTables, "PoolTableId", "PoolTableId");
             return View(reservation);
         }
 
@@ -94,7 +101,7 @@ namespace pool_game_web.Controllers
             {
                 return NotFound();
             }
-            ViewData["ApplicationUserId"] = new SelectList(_context.ApplicationUsers, "Id", "Id", reservation.ApplicationUserId);
+            ViewData["IdentityUserId"] = new SelectList(_context.IdentityUsers, "Id", "Id", reservation.IdentityUserId);
             ViewData["PoolTableId"] = new SelectList(_context.PoolTables, "PoolTableId", "PoolTableId", reservation.PoolTableId);
             return View(reservation);
         }
@@ -104,7 +111,7 @@ namespace pool_game_web.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("ReservationId,ReservationName,Date,TimeStart,TimeEnding,ApplicationUserId,PoolTableId")] Reservation reservation)
+        public async Task<IActionResult> Edit(int id, [Bind("ReservationId,ReservationName,Date,TimeStart,TimeEnding,IdentityUserId,PoolTableId")] Reservation reservation)
         {
             if (id != reservation.ReservationId)
             {
@@ -131,7 +138,7 @@ namespace pool_game_web.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["ApplicationUserId"] = new SelectList(_context.ApplicationUsers, "Id", "Id", reservation.ApplicationUserId);
+            ViewData["IdentityUserId"] = new SelectList(_context.IdentityUsers, "Id", "Id", reservation.IdentityUserId);
             ViewData["PoolTableId"] = new SelectList(_context.PoolTables, "PoolTableId", "PoolTableId", reservation.PoolTableId);
             return View(reservation);
         }
@@ -145,7 +152,7 @@ namespace pool_game_web.Controllers
             }
 
             var reservation = await _context.Reservations
-                .Include(r => r.ApplicationUser)
+                .Include(r => r.IdentityUser)
                 .Include(r => r.PoolTable)
                 .FirstOrDefaultAsync(m => m.ReservationId == id);
             if (reservation == null)
