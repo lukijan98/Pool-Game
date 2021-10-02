@@ -1,4 +1,6 @@
 @model pool_game_web.Models.Reservation
+ @using Microsoft.AspNetCore.Identity
+@inject SignInManager<IdentityUser> SignInManager
 
 @{
     ViewData["Title"] = "Delete";
@@ -48,10 +50,19 @@
             @Html.DisplayFor(model => model.PoolTable.PoolTableId)
         </dd class>
     </dl>
-    
-    <form asp-action="Delete">
-        <input type="hidden" asp-for="ReservationId" />
-        <input type="submit" value="Delete" class="btn btn-danger" /> |
-        <a asp-action="Index">Back to List</a>
-    </form>
+    @if (User.IsInRole("Admin")){
+        <form asp-action="Delete">
+            <input type="hidden" asp-for="ReservationId" />
+            <input type="submit" value="Delete" class="btn btn-danger" /> |
+            <a asp-action="Index">Back to List</a>
+        </form> 
+    }
+    else{
+        <form asp-action="DeleteConfirmedForUser">
+            <input type="hidden" asp-for="ReservationId" />
+            <input type="submit" value="Delete" class="btn btn-danger" /> |
+            <a asp-action="Index">Back to List</a>
+        </form>         
+    }
+
 </div>

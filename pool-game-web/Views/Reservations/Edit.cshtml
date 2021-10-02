@@ -1,4 +1,6 @@
 @model pool_game_web.Models.Reservation
+ @using Microsoft.AspNetCore.Identity
+@inject SignInManager<IdentityUser> SignInManager
 
 @{
     ViewData["Title"] = "Edit";
@@ -10,6 +12,7 @@
 <hr />
 <div class="row">
     <div class="col-md-4">
+        @if (SignInManager.IsSignedIn(User)&&User.IsInRole("Admin")){
         <form asp-action="Edit">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <input type="hidden" asp-for="ReservationId" />
@@ -47,6 +50,47 @@
                 <input type="submit" value="Save" class="btn btn-primary" />
             </div>
         </form>
+        }
+        else{
+        <form asp-action="EditForUser">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="ReservationId" />
+            <div class="form-group">
+                <label asp-for="ReservationName" class="control-label"></label>
+                <input asp-for="ReservationName" class="form-control" />
+                <span asp-validation-for="ReservationName" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Date" class="control-label"></label>
+                <input asp-for="Date" class="form-control" />
+                <span asp-validation-for="Date" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="TimeStart" class="control-label"></label>
+                <input asp-for="TimeStart" class="form-control" />
+                <span asp-validation-for="TimeStart" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="TimeEnding" class="control-label"></label>
+                <input asp-for="TimeEnding" class="form-control" />
+                <span asp-validation-for="TimeEnding" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="IdentityUserId" class="control-label"></label>
+                <select asp-for="IdentityUserId" class="form-control" asp-items="ViewBag.IdentityUserId"></select>
+                <span asp-validation-for="IdentityUserId" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="PoolTableId" class="control-label"></label>
+                <select asp-for="PoolTableId" class="form-control" asp-items="ViewBag.PoolTableId"></select>
+                <span asp-validation-for="PoolTableId" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Save" class="btn btn-primary" />
+            </div>
+        </form>
+        }
+
     </div>
 </div>
 

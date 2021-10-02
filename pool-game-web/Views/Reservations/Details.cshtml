@@ -1,4 +1,6 @@
 @model pool_game_web.Models.Reservation
+ @using Microsoft.AspNetCore.Identity
+@inject SignInManager<IdentityUser> SignInManager
 
 @{
     ViewData["Title"] = "Details";
@@ -50,5 +52,12 @@
 </div>
 <div>
     <a asp-action="Edit" asp-route-id="@Model.ReservationId">Edit</a> |
+    @if(User.IsInRole("Admin")){
     <a asp-action="Index">Back to List</a>
+    }
+    else
+    {
+            <a asp-action="GetReservationsForUser">Back to List</a>
+    }
+
 </div>

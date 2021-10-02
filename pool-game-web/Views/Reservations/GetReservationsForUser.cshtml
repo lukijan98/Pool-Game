@@ -1,0 +1,65 @@
+@model IEnumerable<pool_game_web.Models.Reservation>
+
+@{
+    ViewData["Title"] = "GetReservationsForUser";
+}
+
+<h1>Your reservations</h1>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<table class="table" id="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.ReservationName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Date)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.TimeStart)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.TimeEnding)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.IdentityUser)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.PoolTable)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody id="body">
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.ReservationName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Date)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.TimeStart)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.TimeEnding)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.IdentityUser.Email)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.PoolTable.PoolTableId)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.ReservationId">Edit</a> |
+                <a asp-action="Details" asp-route-id="@item.ReservationId">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.ReservationId">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

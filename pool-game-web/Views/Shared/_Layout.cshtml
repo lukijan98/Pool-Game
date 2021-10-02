@@ -26,6 +26,22 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Reservations" asp-action="Create">Create reservation</a>
+                        </li>
+                        @if (SignInManager.IsSignedIn(User)&&User.IsInRole("Admin"))
+                        {
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Reservations" asp-action="Index">Reservation</a>
+                        </li>
+                        }
+                        else
+                        {
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Reservations" asp-action="GetReservationsForUser">Reservation</a>
+                        </li>
+                        }
+
                     </ul>
                     <ul class="navbar-nav ml-auto">
                     @*If the user is signed-in display Logout link*@
