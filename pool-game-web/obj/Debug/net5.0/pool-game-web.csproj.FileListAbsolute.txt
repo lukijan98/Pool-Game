@@ -170,7 +170,12 @@
 /home/luka/Project/Pool-Game/pool-game-web/obj/Debug/net5.0/Razor/Views/Reservations/Delete.cshtml.g.cs
 /home/luka/Project/Pool-Game/pool-game-web/obj/Debug/net5.0/Razor/Views/Reservations/Details.cshtml.g.cs
 /home/luka/Project/Pool-Game/pool-game-web/obj/Debug/net5.0/Razor/Views/Reservations/Edit.cshtml.g.cs
-/home/luka/Project/Pool-Game/pool-game-web/obj/Debug/net5.0/Razor/Views/Reservations/Index.cshtml.g.cs
 /home/luka/Project/Pool-Game/pool-game-web/bin/Debug/net5.0/FoolProof.Core.dll
 /home/luka/Project/Pool-Game/pool-game-web/bin/Debug/net5.0/Microsoft.DotNet.PlatformAbstractions.dll
 /home/luka/Project/Pool-Game/pool-game-web/bin/Debug/net5.0/Microsoft.Extensions.DependencyModel.dll
+/home/luka/Project/Pool-Game/pool-game-web/bin/Debug/net5.0/libman.json
+/home/luka/Project/Pool-Game/pool-game-web/bin/Debug/net5.0/System.Net.WebSockets.WebSocketProtocol.dll
+/home/luka/Project/Pool-Game/pool-game-web/obj/Debug/net5.0/Razor/Views/Reservations/Index.cshtml.g.cs
+/home/luka/Project/Pool-Game/pool-game-web/bin/Debug/net5.0/Microsoft.AspNetCore.JsonPatch.dll
+/home/luka/Project/Pool-Game/pool-game-web/bin/Debug/net5.0/Microsoft.AspNetCore.Mvc.NewtonsoftJson.dll
+/home/luka/Project/Pool-Game/pool-game-web/bin/Debug/net5.0/Newtonsoft.Json.Bson.dll

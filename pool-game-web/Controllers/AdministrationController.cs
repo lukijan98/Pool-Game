@@ -11,6 +11,7 @@ using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
 
+
 namespace pool_game_web.Controllers
 {
     public class AdministrationController: Controller

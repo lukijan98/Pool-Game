@@ -9,17 +9,22 @@ using pool_game_web.Data;
 using pool_game_web.Models;
 using Microsoft.AspNetCore.Identity;
 using System.Security.Claims;
+using Microsoft.AspNetCore.SignalR;
+using pool_game_web.Hubs;
+
 
 namespace pool_game_web.Controllers
 {
     public class ReservationsController : Controller
     {
         private readonly ApplicationDbContext _context;
-        private readonly UserManager<IdentityUser> _userManager;
 
-        public ReservationsController(ApplicationDbContext context,UserManager<IdentityUser> userManager)
+        private readonly IHubContext<SignalrServer> _signalrHub;
+
+        public ReservationsController(ApplicationDbContext context,IHubContext<SignalrServer> signalrHub)
         {
             _context = context;
+            _signalrHub = signalrHub;
         }
 
         // GET: Reservations
@@ -27,6 +32,13 @@ namespace pool_game_web.Controllers
         {
             var applicationDbContext = _context.Reservations.Include(r => r.IdentityUser).Include(r => r.PoolTable);
             return View(await applicationDbContext.ToListAsync());
+        }
+
+
+        [HttpGet]
+        public IActionResult GetReservations(){
+            var res = _context.Reservations.Include(r => r.IdentityUser).Include(r => r.PoolTable).ToList();
+            return Ok(res);
         }
 
         // GET: Reservations/Details/5
@@ -85,6 +97,7 @@ namespace pool_game_web.Controllers
                     reservation.PoolTableId = tables[0].PoolTableId;
                     _context.Add(reservation);
                     await _context.SaveChangesAsync();
+                    await _signalrHub.Clients.All.SendAsync("LoadReservations");
                     return RedirectToAction(nameof(Index));
                 }       
                 else{
@@ -98,6 +111,7 @@ namespace pool_game_web.Controllers
                         reservation.PoolTableId = tables[0].PoolTableId;
                         _context.Add(reservation);
                         await _context.SaveChangesAsync();
+                        await _signalrHub.Clients.All.SendAsync("LoadReservations");
                         return RedirectToAction(nameof(Index));
                     }      
                 }    
@@ -133,9 +147,9 @@ namespace pool_game_web.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("ReservationId,ReservationName,Date,TimeStart,TimeEnding,IdentityUserId,PoolTableId")] Reservation reservation)
+        public async Task<IActionResult> Edit(int reservationId, [Bind("ReservationId,ReservationName,Date,TimeStart,TimeEnding,IdentityUserId,PoolTableId")] Reservation reservation)
         {
-            if (id != reservation.ReservationId)
+            if (reservationId != reservation.ReservationId)
             {
                 return NotFound();
             }
@@ -146,6 +160,7 @@ namespace pool_game_web.Controllers
                 {
                     _context.Update(reservation);
                     await _context.SaveChangesAsync();
+                    await _signalrHub.Clients.All.SendAsync("LoadReservations");
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -188,11 +203,12 @@ namespace pool_game_web.Controllers
         // POST: Reservations/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        public async Task<IActionResult> DeleteConfirmed(int reservationId)
         {
-            var reservation = await _context.Reservations.FindAsync(id);
+            var reservation = await _context.Reservations.FindAsync(reservationId);
             _context.Reservations.Remove(reservation);
             await _context.SaveChangesAsync();
+            await _signalrHub.Clients.All.SendAsync("LoadReservations");
             return RedirectToAction(nameof(Index));
         }
 

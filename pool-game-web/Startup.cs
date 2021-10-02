@@ -17,7 +17,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using FoolProof.Core;
-
+using Microsoft.AspNetCore.SignalR;
+using pool_game_web.Hubs;
+using Microsoft.AspNetCore.Mvc.NewtonsoftJson;
 namespace pool_game_web
 {
     public class Startup
@@ -44,9 +46,16 @@ namespace pool_game_web
                 config.Filters.Add(new AuthorizeFilter(policy));
             });
             services.AddIdentity<IdentityUser,IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>();
-            services.AddControllersWithViews();
+            services.AddControllersWithViews().AddNewtonsoftJson(options =>
+                 options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
+
+            );
+            // services.AddControllers().AddJsonOptions(options=>{
+            //     options.JsonSerializerOptions.PropertyNamingPolicy=null;
+            // });
             services.AddRazorPages();
             services.AddFoolProof();
+            services.AddSignalR();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -78,6 +87,7 @@ namespace pool_game_web
                     name: "default",
                     pattern: "{controller=Home}/{action=Index}/{id?}");
                 endpoints.MapRazorPages();
+                endpoints.MapHub<SignalrServer>("/signalrServer");
             });
         }
     }
