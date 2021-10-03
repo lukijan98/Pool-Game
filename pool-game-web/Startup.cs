@@ -20,6 +20,8 @@ using FoolProof.Core;
 using Microsoft.AspNetCore.SignalR;
 using pool_game_web.Hubs;
 using Microsoft.AspNetCore.Mvc.NewtonsoftJson;
+using pool_game_web.Repository.Implementation;
+using pool_game_web.Repository;
 namespace pool_game_web
 {
     public class Startup
@@ -56,6 +58,7 @@ namespace pool_game_web
             services.AddRazorPages();
             services.AddFoolProof();
             services.AddSignalR();
+            services.AddTransient<IReservationRepository,ReservationRepositoryImpl>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

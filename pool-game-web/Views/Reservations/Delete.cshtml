@@ -41,7 +41,7 @@
             @Html.DisplayNameFor(model => model.IdentityUser)
         </dt>
         <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.IdentityUser.Id)
+            @Html.DisplayFor(model => model.IdentityUser.Email)
         </dd class>
         <dt class = "col-sm-2">
             @Html.DisplayNameFor(model => model.PoolTable)
@@ -50,19 +50,9 @@
             @Html.DisplayFor(model => model.PoolTable.PoolTableId)
         </dd class>
     </dl>
-    @if (User.IsInRole("Admin")){
         <form asp-action="Delete">
             <input type="hidden" asp-for="ReservationId" />
             <input type="submit" value="Delete" class="btn btn-danger" /> |
             <a asp-action="Index">Back to List</a>
         </form> 
-    }
-    else{
-        <form asp-action="DeleteConfirmedForUser">
-            <input type="hidden" asp-for="ReservationId" />
-            <input type="submit" value="Delete" class="btn btn-danger" /> |
-            <a asp-action="Index">Back to List</a>
-        </form>         
-    }
-
 </div>

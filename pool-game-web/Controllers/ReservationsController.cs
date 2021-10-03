@@ -12,6 +12,8 @@ using Microsoft.AspNetCore.Identity;
 using System.Security.Claims;
 using Microsoft.AspNetCore.SignalR;
 using pool_game_web.Hubs;
+using pool_game_web.Repository.Implementation;
+using pool_game_web.Repository;
 
 
 namespace pool_game_web.Controllers
@@ -22,32 +24,38 @@ namespace pool_game_web.Controllers
 
         private readonly IHubContext<SignalrServer> _signalrHub;
 
-        public ReservationsController(ApplicationDbContext context,IHubContext<SignalrServer> signalrHub)
+        private readonly IReservationRepository _reservationRepository;
+
+        private readonly UserManager<IdentityUser> _userManager;
+
+        public ReservationsController(ApplicationDbContext context,IHubContext<SignalrServer> signalrHub,IReservationRepository reservationRepository,UserManager<IdentityUser> userManager)
         {
             _context = context;
             _signalrHub = signalrHub;
+            _reservationRepository = reservationRepository;
+            _userManager = userManager;
         }
 
-        // GET: Reservations
-        [Authorize(Roles="Admin")]
+        //[Authorize(Roles="Admin")]
         public async Task<IActionResult> Index()
-        {
-            var applicationDbContext = _context.Reservations.Include(r => r.IdentityUser).Include(r => r.PoolTable).AsNoTracking();
-            return View(await applicationDbContext.ToListAsync());
+        {  
+            if(await GetCurrentUserRole()=="Admin"){
+                await _signalrHub.Clients.All.SendAsync("LoadReservations");
+                return View();
+            }     
+            else
+                return RedirectToAction(nameof(IndexForUser));      
         }
 
         [HttpGet]
-        public IActionResult GetReservationsForUser(){
-            var user =  _context.IdentityUsers.Where(t => t.Email == User.FindFirstValue(ClaimTypes.Email)).ToList();
-            var res = _context.Reservations.Include(r => r.IdentityUser).Include(r => r.PoolTable).Where(r=>r.IdentityUserId==user[0].Id).AsNoTracking().ToList();
-            return View(res);
+        public async Task<IActionResult> IndexForUser(){
+            return View(await _reservationRepository.getReservationsForUser(await GetCurrentUser()));
         }
 
 
         [HttpGet]
-        public IActionResult GetReservations(){
-            var res = _context.Reservations.Include(r => r.IdentityUser).Include(r => r.PoolTable).AsNoTracking().ToList();
-            return Ok(res);
+        public async Task<IActionResult> GetReservations(){
+            return Ok(await _reservationRepository.getAllReservations());
         }
 
         // GET: Reservations/Details/5
@@ -57,11 +65,7 @@ namespace pool_game_web.Controllers
             {
                 return NotFound();
             }
-
-            var reservation = await _context.Reservations
-                .Include(r => r.IdentityUser)
-                .Include(r => r.PoolTable)
-                .FirstOrDefaultAsync(m => m.ReservationId == id);
+            var reservation = await  _reservationRepository.getReservationById(id.Value);
             if (reservation == null)
             {
                 return NotFound();
@@ -73,9 +77,7 @@ namespace pool_game_web.Controllers
         // GET: Reservations/Create
         public async Task<IActionResult> Create()
         {
-            var a = await _context.IdentityUsers.Where(t => t.Email == User.FindFirstValue(ClaimTypes.Email)).ToListAsync();
-            ViewData["IdentityUserId"] = new SelectList(a,"Id","Email");
-           // ViewData["IdentityUserId"] = new SelectList(_context.IdentityUsers, "Id", "Id");
+            ViewData["IdentityUserId"] = new SelectList(new List<IdentityUser>{await GetCurrentUser()},"Id","Email");
            // ViewData["PoolTableId"] = new SelectList(_context.PoolTables, "PoolTableId", "PoolTableId");
             return View();
         }
@@ -89,94 +91,20 @@ namespace pool_game_web.Controllers
         {
             if (ModelState.IsValid)
             {
-                IList<Reservation> res = _context.Reservations
-                    .Where(r => (r.Date == reservation.Date) && (((TimeSpan.Compare(reservation.TimeStart,r.TimeStart)<=0)&&(TimeSpan.Compare(reservation.TimeEnding,r.TimeEnding)>=0))||
-                                ((TimeSpan.Compare(reservation.TimeStart,r.TimeStart)>=0)&&(TimeSpan.Compare(reservation.TimeEnding,r.TimeEnding)<=0))||
-                                ((TimeSpan.Compare(reservation.TimeStart,r.TimeEnding)<0)&&(TimeSpan.Compare(reservation.TimeEnding,r.TimeEnding)>0))||
-                                ((TimeSpan.Compare(reservation.TimeStart,r.TimeStart)<0)&&(TimeSpan.Compare(reservation.TimeEnding,r.TimeStart)>0))) )
-                                .ToList();
-                   // .FirstOrDefault();
-                IList<PoolTable> tables = _context.PoolTables.ToList();
-                if(tables.Count!=0)
-                {    
-                if(res.Count == 0||res==null){
-                    reservation.PoolTableId = tables[0].PoolTableId;
-                    _context.Add(reservation);
-                    await _context.SaveChangesAsync();
+                if(await _reservationRepository.addReservation(reservation))
+                {
                     await _signalrHub.Clients.All.SendAsync("LoadReservations");
                     return RedirectToAction(nameof(Index));
-                }       
-                else{
-                    foreach (Reservation reserv in res)
-                    {
-                        PoolTable itemToRemove = tables.SingleOrDefault(r => r.PoolTableId == reserv.PoolTableId);
-                        tables.Remove(itemToRemove);
-                    }
-                    if(tables.Count != 0){
-                        reservation.PoolTableId = tables[0].PoolTableId;
-                        _context.Add(reservation);
-                        await _context.SaveChangesAsync();
-                        await _signalrHub.Clients.All.SendAsync("LoadReservations");
-                        return RedirectToAction(nameof(Index));
-                    }      
-                }
-                }    
+
+                }   
+                else
+                    ModelState.AddModelError("", "No available table at that time and date");
             }
-            
-            ModelState.AddModelError("", "No available table at that time and date");
-            var a = await _context.IdentityUsers.Where(t => t.Email == User.FindFirstValue(ClaimTypes.Email)).ToListAsync();
-            ViewData["IdentityUserId"] = new SelectList(a,"Id","Email");
-           // ViewData["IdentityUserId"] = new SelectList(_context.IdentityUsers, "Id", "Id");
-            ViewData["PoolTableId"] = new SelectList(_context.PoolTables, "PoolTableId", "PoolTableId");
+            ViewData["IdentityUserId"] = new SelectList(new List<IdentityUser>{await GetCurrentUser()},"Id","Email");
+            //ViewData["PoolTableId"] = new SelectList(_context.PoolTables, "PoolTableId", "PoolTableId");
             return View(reservation);
         }
-        [HttpPost, ActionName("CreateForUser")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateForUser([Bind("ReservationId,ReservationName,Date,TimeStart,TimeEnding,IdentityUserId,PoolTableId")] Reservation reservation)
-        {
-            if (ModelState.IsValid)
-            {
-                Console.WriteLine("Usao 1");
-                IList<Reservation> res = _context.Reservations
-                    .Where(r => (r.Date == reservation.Date) && (((TimeSpan.Compare(reservation.TimeStart,r.TimeStart)<=0)&&(TimeSpan.Compare(reservation.TimeEnding,r.TimeEnding)>=0))||
-                                ((TimeSpan.Compare(reservation.TimeStart,r.TimeStart)>=0)&&(TimeSpan.Compare(reservation.TimeEnding,r.TimeEnding)<=0))||
-                                ((TimeSpan.Compare(reservation.TimeStart,r.TimeEnding)<0)&&(TimeSpan.Compare(reservation.TimeEnding,r.TimeEnding)>0))||
-                                ((TimeSpan.Compare(reservation.TimeStart,r.TimeStart)<0)&&(TimeSpan.Compare(reservation.TimeEnding,r.TimeStart)>0))) )
-                                .ToList();
-                   // .FirstOrDefault();
-                IList<PoolTable> tables = _context.PoolTables.ToList();     
-                if(res.Count == 0||res==null){
-                    reservation.PoolTableId = tables[0].PoolTableId;
-                    _context.Add(reservation);
-                    await _context.SaveChangesAsync();
-                    await _signalrHub.Clients.All.SendAsync("LoadReservations");
-                    return RedirectToAction(nameof(GetReservationsForUser));
-                }       
-                else{
-                    foreach (Reservation reserv in res)
-                    {
-
-                        PoolTable itemToRemove = tables.SingleOrDefault(r => r.PoolTableId == reserv.PoolTableId);
-                        tables.Remove(itemToRemove);
-                    }
-                    if(tables.Count != 0){
-                        reservation.PoolTableId = tables[0].PoolTableId;
-                        _context.Add(reservation);
-                        await _context.SaveChangesAsync();
-                        await _signalrHub.Clients.All.SendAsync("LoadReservations");
-                        return RedirectToAction(nameof(GetReservationsForUser));
-                    }      
-                }    
-            }
-            
-            ModelState.AddModelError("", "No available table at that time and date");
-            var a = await _context.IdentityUsers.Where(t => t.Email == User.FindFirstValue(ClaimTypes.Email)).ToListAsync();
-            ViewData["IdentityUserId"] = new SelectList(a,"Id","Email");
-           // ViewData["IdentityUserId"] = new SelectList(_context.IdentityUsers, "Id", "Id");
-            ViewData["PoolTableId"] = new SelectList(_context.PoolTables, "PoolTableId", "PoolTableId");
-            return View(reservation);
-        }
-
+ 
         // GET: Reservations/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
@@ -184,13 +112,12 @@ namespace pool_game_web.Controllers
             {
                 return NotFound();
             }
-
             var reservation = await _context.Reservations.FindAsync(id);
             if (reservation == null)
             {
                 return NotFound();
             }
-            ViewData["IdentityUserId"] = new SelectList(_context.IdentityUsers, "Id", "Id", reservation.IdentityUserId);
+            ViewData["IdentityUserId"] = new SelectList(new List<IdentityUser>{(await _reservationRepository.getReservationById(id.Value)).IdentityUser},"Id","Email");
             ViewData["PoolTableId"] = new SelectList(_context.PoolTables, "PoolTableId", "PoolTableId", reservation.PoolTableId);
             return View(reservation);
         }
@@ -206,91 +133,20 @@ namespace pool_game_web.Controllers
             {
                 return NotFound();
             }
-
-            if (ModelState.IsValid)
-            {
-                Reservation old = _context.Reservations.Find(reservationId);
-                bool eligableToUpdate = false;
-                if(!((TimeSpan.Compare(reservation.TimeStart,old.TimeStart)==0)&&(TimeSpan.Compare(reservation.TimeEnding,old.TimeEnding)==0)&&(DateTime.Compare(reservation.Date,old.Date)==0)))
-                {
-                    IList<Reservation> res = _context.Reservations
-                    .Where(r => (r.Date == reservation.Date) && (((TimeSpan.Compare(reservation.TimeStart,r.TimeStart)<=0)&&(TimeSpan.Compare(reservation.TimeEnding,r.TimeEnding)>=0))||
-                                ((TimeSpan.Compare(reservation.TimeStart,r.TimeStart)>=0)&&(TimeSpan.Compare(reservation.TimeEnding,r.TimeEnding)<=0))||
-                                ((TimeSpan.Compare(reservation.TimeStart,r.TimeEnding)<0)&&(TimeSpan.Compare(reservation.TimeEnding,r.TimeEnding)>0))||
-                                ((TimeSpan.Compare(reservation.TimeStart,r.TimeStart)<0)&&(TimeSpan.Compare(reservation.TimeEnding,r.TimeStart)>0))) )
-                                .AsNoTracking()
-                                .ToList();
-                    if((res.Count == 0)||((res.Count == 1)&&(res[0].ReservationId==reservationId))){
-                        eligableToUpdate = true;
-                    }
-                    else{
-                        IList<PoolTable> tables = _context.PoolTables.ToList();
-                        foreach (Reservation reserv in res)
-                        {       
-                            PoolTable itemToRemove = tables.SingleOrDefault(r => r.PoolTableId == reserv.PoolTableId);
-                            tables.Remove(itemToRemove);
-                        }
-                        if(tables.Count != 0){
-                            reservation.PoolTableId = tables[0].PoolTableId;
-                            eligableToUpdate = true;
-                        }
-                    }
-                }
-                else
-                {
-                    eligableToUpdate = true;
-                }
-                _context.Entry(old).State = EntityState.Detached;
-                if(eligableToUpdate){
-                    try
-                    {
-
-                        _context.Update(reservation);
-                        await _context.SaveChangesAsync();
-                        await _signalrHub.Clients.All.SendAsync("LoadReservations");
-                    }
-                    catch (DbUpdateConcurrencyException)
-                    {
-                        if (!ReservationExists(reservation.ReservationId))
-                        {
-                            return NotFound();
-                        }
-                        else
-                        {
-                            throw;
-                        }
-                    }
-                    return RedirectToAction(nameof(Index));
-                }
-
-            }
-            ModelState.AddModelError("", "No available table at that time and date");
-            var a = await _context.IdentityUsers.Where(t => t.Email == User.FindFirstValue(ClaimTypes.Email)).ToListAsync();
-            ViewData["IdentityUserId"] = new SelectList(a,"Id","Email");
-           // ViewData["IdentityUserId"] = new SelectList(_context.IdentityUsers, "Id", "Id", reservation.IdentityUserId);
-            ViewData["PoolTableId"] = new SelectList(_context.PoolTables, "PoolTableId", "PoolTableId", reservation.PoolTableId);
-            return View(reservation);
-        }
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditForUser(int reservationId, [Bind("ReservationId,ReservationName,Date,TimeStart,TimeEnding,IdentityUserId,PoolTableId")] Reservation reservation)
-        {
-            if (reservationId != reservation.ReservationId)
-            {
-                return NotFound();
-            }
-
             if (ModelState.IsValid)
             {
                 try
                 {
-                    _context.Update(reservation);
-                    await _context.SaveChangesAsync();
-                    await _signalrHub.Clients.All.SendAsync("LoadReservations");
+                    if(await _reservationRepository.updateReservation(reservationId,reservation)){
+                        await _signalrHub.Clients.All.SendAsync("LoadReservations");
+                        return RedirectToAction(nameof(Index));
+                    }      
+                    else
+                        ModelState.AddModelError("", "No available table at that time and date");
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!ReservationExists(reservation.ReservationId))
+                    if (!_reservationRepository.reservationExists(reservation.ReservationId))
                     {
                         return NotFound();
                     }
@@ -299,9 +155,8 @@ namespace pool_game_web.Controllers
                         throw;
                     }
                 }
-                return RedirectToAction(nameof(GetReservationsForUser));
             }
-            ViewData["IdentityUserId"] = new SelectList(_context.IdentityUsers, "Id", "Id", reservation.IdentityUserId);
+            ViewData["IdentityUserId"] = new SelectList(new List<IdentityUser>{(await _reservationRepository.getReservationById(reservationId)).IdentityUser},"Id","Email");
             ViewData["PoolTableId"] = new SelectList(_context.PoolTables, "PoolTableId", "PoolTableId", reservation.PoolTableId);
             return View(reservation);
         }
@@ -313,11 +168,7 @@ namespace pool_game_web.Controllers
             {
                 return NotFound();
             }
-
-            var reservation = await _context.Reservations
-                .Include(r => r.IdentityUser)
-                .Include(r => r.PoolTable)
-                .FirstOrDefaultAsync(m => m.ReservationId == id);
+            var reservation = await  _reservationRepository.getReservationById(id.Value);
             if (reservation == null)
             {
                 return NotFound();
@@ -331,27 +182,22 @@ namespace pool_game_web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int reservationId)
         {
-            var reservation = await _context.Reservations.FindAsync(reservationId);
-            _context.Reservations.Remove(reservation);
-            await _context.SaveChangesAsync();
+            await _reservationRepository.deleteReservation(reservationId);
             await _signalrHub.Clients.All.SendAsync("LoadReservations");
             return RedirectToAction(nameof(Index));
-        }
-
-        [HttpPost,ActionName("DeleteConfirmedForUser")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmedForUser(int reservationId)
-        {
-            var reservation = await _context.Reservations.FindAsync(reservationId);
-            _context.Reservations.Remove(reservation);
-            await _context.SaveChangesAsync();
-            await _signalrHub.Clients.All.SendAsync("LoadReservations");
-            return RedirectToAction(nameof(GetReservationsForUser));
         }
 
         private bool ReservationExists(int id)
         {
             return _context.Reservations.Any(e => e.ReservationId == id);
+        }
+        public async Task<IdentityUser> GetCurrentUser()
+        {
+            ClaimsPrincipal currentUser = User;
+            return await _userManager.GetUserAsync(User);//.Result;
+        }
+        public async Task<string> GetCurrentUserRole(){
+            return (await _userManager.GetRolesAsync(await GetCurrentUser()))[0];
         }
     }
 }

@@ -1,7 +1,7 @@
 @model IEnumerable<pool_game_web.Models.Reservation>
 
 @{
-    ViewData["Title"] = "GetReservationsForUser";
+    ViewData["Title"] = "IndexForUser";
 }
 
 <h1>Your reservations</h1>
@@ -12,25 +12,12 @@
 <table class="table" id="table">
     <thead>
         <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.ReservationName)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Date)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.TimeStart)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.TimeEnding)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.IdentityUser)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.PoolTable)
-            </th>
-            <th></th>
+            <th>Reservation name</th>
+            <th>Date</th>
+            <th>Time Start</th>
+            <th>Time Ending</th>
+            <th>Email</th>
+            <th>PoolTable Number</th>
         </tr>
     </thead>
     <tbody id="body">
@@ -52,7 +39,7 @@
                 @Html.DisplayFor(modelItem => item.IdentityUser.Email)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.PoolTable.PoolTableId)
+                @Html.DisplayFor(modelItem => item.PoolTable.PoolTableNumber)
             </td>
             <td>
                 <a asp-action="Edit" asp-route-id="@item.ReservationId">Edit</a> |
