@@ -25,6 +25,6 @@ namespace pool_game_web.Data
         public DbSet<Reservation> Reservations { get; set;}
         public DbSet<PoolTable> PoolTables { get; set;}
         public DbSet<IdentityUser> IdentityUsers { get; set;}
-        public DbSet<IdentityRole> IdentityRoles { get; set;}
+        // public DbSet<IdentityRole> IdentityRoles { get; set;}
     }
 }

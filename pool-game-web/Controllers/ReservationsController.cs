@@ -187,10 +187,6 @@ namespace pool_game_web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        private bool ReservationExists(int id)
-        {
-            return _context.Reservations.Any(e => e.ReservationId == id);
-        }
         public async Task<IdentityUser> GetCurrentUser()
         {
             ClaimsPrincipal currentUser = User;
