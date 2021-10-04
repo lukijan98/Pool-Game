@@ -2,8 +2,8 @@
 
 ## Brief description 
 
-- The application is used to book billiard tables\
-- Supports a user who can book tables and have an overview of their reservations\
+- The application is used to book billiard tables
+- Supports a user who can book tables and have an overview of their reservations
 - Supports an admin who can also book and have an overview of all reservations in the database in RT
 
 ## Relational Schema
@@ -15,3 +15,4 @@
 - .NET Core/ASP.NET Core MVC
 - Entity Framework Core
 - Identity Core
+- SignalR
